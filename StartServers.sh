@@ -21,7 +21,7 @@ installed="Have you followed me on Twitter?: @TheGingerGeek"
 # Note: Everything is Capital Sensitive!
 #
 # 1) Copy this file into the folder where you all the servers are located
-# 2) Set the ServerRoot variable, it must be a full path e.g /home/Servers (not there is NO finishing /). If you don't know where you are, but are where the servers are, type pwd to find out the path.
+# 2) Set the ServerRoot variable, it must be a full path e.g /home/Servers (note there is NO finishing /). If you don't know where you are, but are where the servers are, type pwd to find out the path.
 # 3) Create an Ignore List, by default this should be called ignore.txt and it is stored in the directory you set as ServerRoot. This file must be created and contain at least ONE directory or the script may not work.
 # 4) Configure the Bungee settings. See comments for specifics
 # 5) Configure the Standard Server Settings. See comments for specifics
