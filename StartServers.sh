@@ -19,6 +19,7 @@ installed="Have you followed me on Twitter?: @TheGingerGeek"
 # Installation Instructions:
 # DO NOT RUN WITHOUT READING THIS
 # Note: Everything is Capital Sensitive!
+# Note: It is higly recommended not to run this script as root! See Appendix A (just below the settings) for instructions on how to change the user.
 #
 # 1) Copy this file into the folder where you all the servers are located
 # 2) Set the ServerRoot variable, it must be a full path e.g /home/Servers (note there is NO finishing /). If you don't know where you are, but are where the servers are, type pwd to find out the path.
@@ -29,10 +30,11 @@ installed="Have you followed me on Twitter?: @TheGingerGeek"
 # 7) Repeat Step 6
 # 8) Before the instructions there is a variable called installed, change the value inside the quotes to Zombies
 # 9) You are done setting up, execute the script with 
-#    bash WhatEverThisIsCalled.sh 
+#    /PathTo/WhatEverThisIsCalled.sh 
 # 10) Follow me on Twitter: @TheGingerGeek
 #     i) or like me on FB: FB/TheGingerGeek
 #     ii) or sub me on Youtube: YT/GingerGeekUK
+
 
 
 ################################
@@ -41,6 +43,7 @@ installed="Have you followed me on Twitter?: @TheGingerGeek"
 ServerRoot="SETME" #Where should I start looking from (full path) e.g. /home/Servers
 IgnoreList="$ServerRoot/ignore.txt" #Location of Ignore List. See Install Guide
 debug=0 #Set to one for extra output, helpful for spotting errors.
+userRunnuer="" #Leave blank to run as current logged in user, else it will switch using su! Thus you must be root or know the password!
 ################################
 #      Bungee Settings         #
 ################################
@@ -58,8 +61,51 @@ ServerExecChanged="No" #Change to yes if you have changed below
 ServerExec="" #Advanced Users Only - Change the command for starting the Bungee Server
 #################################
 
-IFS=$'\n' read -d '' -r -a disabledDirs < $IgnoreList #Please don't touch this, it's quite important
 
+#################################
+#         Appendixes            #
+#################################
+# Contents                      #
+#################################
+# Appendix A - Not running as Root
+#################################
+#          Appendix A           #
+#################################
+# To have the Minecraft Server run as not root, follow these steps
+# Note, you will need root access to do this!
+#
+# 1) Create a new user on your Linux System using:
+# useradd -m -d /home/USERNAME USERNAME
+# e.g
+# useradd -m -p SeeBelow -d /home/MCServer MCServer
+# This will create a new Useraccount with it's own directory in /home/[UserNameYouHadChosen]
+# The -p takes an encrypted password, unless you intend to actually use the account, set this to whatever you want, otherwise use crypt(3) to create an encrypted password (Google it)
+#
+# 2) Copy Server Directory over to the new directory
+# mv [CurrentLocationOfFolders]/*  /home/[UserNameYouHadChosen]
+#
+# 3) Ensure that the new folder place is owned by the new user
+# chown -R [NewUsername] [PathToFolderWhereEverythingIsStored]
+#
+# 4) Making sure that the folder has appropiate permissions.
+# chmod 754 -R [PathToFolderWhereEverythingIsStored]
+# 754 is the permissions I recommend using.
+
+
+
+
+
+IFS=$'\n' read -d '' -r -a disabledDirs < $IgnoreList #Please don't touch this, it's quite important
+isRoot() {
+#If Root, will return True (0)
+if [ "$(id -u)" == "0" ]; then
+  debug "Being Run as Root User"
+  return 0 #True
+else
+  return 1 #False
+fi
+# ...
+}
 
 debug() {
 #If we are in debug mode then this will echo Debug
@@ -81,7 +127,10 @@ StartBungee () {
   then
     $BungeeExec
   else
-    screen -mdS ${PWD##*/} java $BungeeArgs -jar $BungeeJarName
+    $tmp01 = ${PWD##*/}
+    $tmp02 = "-MCBSS"
+    $tmp03 = $tmp01+$tmp02
+    screen -mdS $tmp03 java $BungeeArgs -jar $BungeeJarName
   fi
 }
 StartServer () {
@@ -91,7 +140,10 @@ StartServer () {
   then
     $ServerExec
   else
-    screen -mdS ${PWD##*/} java $StandardArgs -jar $ServerJarName
+    $tmp01 = ${PWD##*/}
+    $tmp02 = "-MCSS"
+    $tmp03 = $tmp01+$tmp02
+    screen -mdS $tmp03 java $StandardArgs -jar $ServerJarName
   fi
 }
 
@@ -190,6 +242,16 @@ FindServers () {
     echo "#####################################"
    done
 }
+
+runProgram() {
+    echo "####################################"
+    debug "All functions defined"
+    info "Finding and Starting Servers..."
+    echo "####################################"
+    FindServers $ServerRoot
+    info "Complete. I have started all the server I could find."
+}
+    
 if [ $installed == "Zombies" ]
 then
   debug "ServerRoot = $ServerRoot"
@@ -201,12 +263,20 @@ then
   debug "StandardArgs = $StandardArgs"
   debug "disabledDirs = $disabledDirs"
   debug "IFS = $IFS"
-  echo "####################################"
-  debug "All functions defined"
-  info "Finding and Starting Servers..."
-  echo "####################################"
-  FindServers $ServerRoot
-  info "Complete. I have started all the server I could find."
+  if [ isRoot() == 1 ]
+  then
+    runProgram()
+  else
+    echo "You are running this program as root user. Please don't for security reason."
+    echo "Are you sure you want to continue (y/n)"
+    read userIn
+    if [ ${userIn,,} == "y" ]
+      runProgram()
+    else
+      echo "To run the server as a non-root user, follow the intructions held within this file"
+      echo "Exiting Script"
+    fi
+  fi
 else
   info "You have not installed this Script, please open this up and follow instructions"
 fi
